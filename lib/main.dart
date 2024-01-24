@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutterfcm/firebase_options.dart';
 
 import 'api/firebase_api.dart';
 import 'homepage.dart';
+import 'page/notificationscreen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -30,6 +33,19 @@ Future<void> main() async {
   PushNotifications.localNotiInit();
   //listten background Notification
   FirebaseMessaging.onBackgroundMessage(_firebaseBackground);
+
+  //menhandle foreground nofication
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    String payloadData = jsonDecode(message.data as String);
+    print("got message");
+    if (message.notification != null) {
+      PushNotifications.showSimpleNotification(
+        title: message.notification!.title!,
+        body: message.notification!.body!,
+        payload: payloadData,
+      );
+    }
+  });
   runApp(const MyApp());
 }
 
@@ -39,8 +55,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Flutter Demo',
       home: HomePage(),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/message': (context) => const NotificationScreen(),
+      },
     );
   }
 }
